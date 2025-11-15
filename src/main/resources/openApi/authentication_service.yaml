@@ -1,0 +1,245 @@
+openapi: "3.0.1"
+
+info:
+  title: "User Authentication Service - API"
+  version: "1.1.0"
+  description: |
+    API specifications for the User Authentication service.
+    This spec includes:
+    - Header-based user creation (username, email, password in headers)
+    - User retrieval & search endpoints
+    - 400, 401, 404, 409, 500 error responses
+    - JWT tokens expose only `userCode` (UUID) as `sub` claim
+
+servers:
+  - url: http://localhost:8086/api/authenticate
+    description: Local Development Server
+
+tags:
+  - name: User
+    description: All user-related operations
+  - name: Auth
+    description: JWT Token-related operations
+
+paths:
+  /user:
+    post:
+      tags:
+        - User
+      summary: Create a new user (via headers)
+      operationId: createUser
+      description: |
+        Creates a new user using headers instead of request body.
+        Required headers: username, email, password.
+
+        Server will generate a `userCode` (UUID) and return it in the response body.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserRequest'
+      responses:
+        '201':
+          description: User successfully created (returns created user with server-generated userCode)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+              examples:
+                created:
+                  summary: Example user creation response
+                  value:
+                    userCode: "8a8f9b2e-1f3c-4d2a-9f3a-abcdef123456"
+                    username: "alice"
+                    email: "alice@example.com"
+                    role: "USER"
+        '400':
+          description: Invalid input or missing required headers
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                missingHeader:
+                  summary: Missing header example
+                  value:
+                    code: 400
+                    message: "Missing required header: password"
+        '409':
+          description: Username or email already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                conflict:
+                  value:
+                    code: 409
+                    message: "Username or email already exists"
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /user/{userCode}:
+    get:
+      tags:
+        - User
+      summary: Get User by userCode
+      operationId: getUserByUserCode
+      parameters:
+        - name: userCode
+          in: path
+          description: Unique user code (UUID)
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: User found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /user/{userCode}/validate:
+    get:
+      tags:
+        - User
+      summary: Get user's role by userCode
+      operationId: getUserRole
+      parameters:
+        - name: userCode
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: User role found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  role:
+                    type: string
+                    enum: [USER, SUPERUSER]
+        '404':
+          description: User not found
+
+  /users/search:
+    get:
+      tags:
+        - User
+      summary: Search users by username or email
+      operationId: searchUsers
+      description: |
+        Allows searching users by username or email.
+        At least one query parameter is required.
+      parameters:
+        - name: username
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: email
+          in: query
+          required: false
+          schema:
+            type: string
+            format: email
+      responses:
+        '200':
+          description: List of matching users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserResponse'
+        '400':
+          description: Missing search criteria
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    CreateUserRequest:
+      type: object
+      required:
+        - username
+        - email
+        - password
+      properties:
+        username:
+          type: string
+          description: Username for the new user
+        email:
+          type: string
+          format: email
+          description: Email address of the new user
+        password:
+          type: string
+          description: Account password
+        role:
+          type: string
+          description: Role for the user
+          default: USER
+
+    UserResponse:
+      type: object
+      description: User details (password excluded intentionally)
+      required:
+        - username
+        - email
+        - role
+      properties:
+        username:
+          type: string
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+          enum: [USER, SUPERUSER]
+
+    Error:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+        message:
+          type: string
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
