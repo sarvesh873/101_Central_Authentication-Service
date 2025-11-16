@@ -1,5 +1,6 @@
 package com.central.authentication_service.exception;
 
+import com.central.authentication_service.model.ErrorResponse;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,8 +22,26 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message", ex.getMessage()));
     }
 
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<?> handleAll(Exception ex) {
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("message", "Internal server error"));
+
+
+    @ExceptionHandler(UserDoesNotExistException.class)
+    public ResponseEntity<ErrorResponse> handleUserDoesNotExistException(UserDoesNotExistException ex) {
+
+        int errorCode = HttpStatus.NOT_FOUND.value();
+        String description = "A record with the specified user details does not exist";
+        String errorType = HttpStatus.NOT_FOUND.getReasonPhrase();
+        String errorMessage = ex.getMessage();
+
+        return genrateErrorResponse(errorCode,description,errorType, errorMessage);
     }
+
+    private ResponseEntity<ErrorResponse> genrateErrorResponse(int errorCode, String description, String errorType, String errorMessage) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.builder()
+                .errorCode(errorCode)
+                .description(description)
+                .errorType(errorType)
+                .errorMessage(errorMessage)
+                .build());
+    }
+
 }

@@ -7,6 +7,8 @@ import org.openapitools.model.UserResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 
 /**
     * This interface specifies all the service methods that must be implemented.
@@ -16,5 +18,9 @@ import org.springframework.stereotype.Service;
 public interface UserService {
 
     ResponseEntity<UserResponse> createUser(CentralRequest<CreateUserRequest> request);
+
+    ResponseEntity<UserResponse> getUserByUserCode(String userCode);
+
+    ResponseEntity<List<UserResponse>> searchUsers(String username, String email);
 
 }
