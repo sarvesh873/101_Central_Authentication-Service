@@ -84,7 +84,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /user/{userCode}:
     get:
       tags:
         - User
@@ -92,12 +91,11 @@ paths:
       operationId: getUserByUserCode
       parameters:
         - name: userCode
-          in: path
-          description: Unique user code (UUID)
+          in: query
+          description: Unique user code
           required: true
           schema:
             type: string
-            format: uuid
       responses:
         '200':
           description: User found
@@ -118,32 +116,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /user/{userCode}/validate:
-    get:
-      tags:
-        - User
-      summary: Get user's role by userCode
-      operationId: getUserRole
-      parameters:
-        - name: userCode
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        '200':
-          description: User role found
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  role:
-                    type: string
-                    enum: [USER, SUPERUSER]
-        '404':
-          description: User not found
 
   /users/search:
     get:
@@ -188,6 +160,62 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
+  /auth/login:
+    post:
+      tags:
+        - Auth
+      summary: Login with email and password
+      description: Generate token on user login
+      operationId: loginUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Successful login
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+        "401":
+          description: Invalid email or password
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /auth/validate:
+    post:
+      tags:
+        - Auth
+      summary: Validate JWT token
+      operationId: validateToken
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          description: Bearer access token
+          schema:
+            type: string
+            example: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+      responses:
+          '200':
+            description: Token is valid
+          '401':
+            description: Token is invalid or expired
+          '500':
+            description: Internal server error
+
+
 components:
   schemas:
     CreateUserRequest:
@@ -203,9 +231,11 @@ components:
         email:
           type: string
           format: email
+          minLength: 4
           description: Email address of the new user
         password:
           type: string
+          minLength: 8
           description: Account password
         role:
           type: string
@@ -238,8 +268,22 @@ components:
         message:
           type: string
 
-  securitySchemes:
-    bearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
+    LoginRequest:
+      type: object
+      required: [ email, password ]
+      properties:
+        email:
+          type: string
+          format: email
+          minLength: 4
+        password:
+          type: string
+          minLength: 8
+
+    LoginResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+        expiresIn:
+          type: string

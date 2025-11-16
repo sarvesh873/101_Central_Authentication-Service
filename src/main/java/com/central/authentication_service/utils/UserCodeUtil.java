@@ -1,34 +1,38 @@
 package com.central.authentication_service.utils;
 
+import static com.central.authentication_service.constants.Constants.*;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
+@Component
 public class UserCodeUtil {
 
+    @Value("${central.usercode.secret}")
+    private static String SECRET;
 
-    private static final String SECRET = "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCoCRIIJZ2yelWRekUPh/bgVZAOYcB4F7MVRAuQ5ZszLVgWlZBaUBuvF9hrO2+Wv3VlDkPWWgZyVdWI1ObAiFQAWRSWSU4yT+1bGpEK9Z42mZSoHLB+UOLm24W3a5V9iNV26wS0Oaza3ANROSwBmRJOgTlOsSE3DNl1cKUhyPsd4QIDAQAB" +
-            "";
     private static final SecureRandom RANDOM = new SecureRandom();
-    private static final char[] ALPHANUM = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".toCharArray();
+    private static final char[] ALPHANUM_CHARS = ALPHANUM.toCharArray();
 
     public static String generateUserCode(String username) {
 
-        if (username == null || username.trim().isEmpty()) {
-            throw new IllegalArgumentException("Username cannot be empty");
-        }
-
         try {
+            log.info("Generating user code for username: {}", username);
             // 1. Generate random salt (secure)
             byte[] salt = new byte[16]; // 128-bit crypto salt
             RANDOM.nextBytes(salt);
 
             // 2. Compute HMAC(username + randomSalt)
-            Mac mac = Mac.getInstance("HmacSHA256");
+            Mac mac = Mac.getInstance(HMAC_ALGORITHM);
             SecretKeySpec keySpec = new SecretKeySpec(
                     SECRET.getBytes(StandardCharsets.UTF_8),
-                    "HmacSHA256"
+                    HMAC_ALGORITHM
             );
             mac.init(keySpec);
 
@@ -39,13 +43,14 @@ public class UserCodeUtil {
             //    Use modulus to map bytes to 36-character alphabet safely
             StringBuilder result = new StringBuilder(7);
             for (int i = 0; i < 7; i++) {
-                int index = (rawHmac[i] & 0xFF) % ALPHANUM.length;
-                result.append(ALPHANUM[index]);
+                int index = (rawHmac[i] & 0xFF) % ALPHANUM_CHARS.length;
+                result.append(ALPHANUM_CHARS[index]);
             }
-
+            log.info("Generated user code successfully for username {}", username);
             return result.toString();
 
         } catch (Exception e) {
+            log.error("Error generating user code for username {}", username, e);
             throw new RuntimeException("Error generating user code", e);
         }
     }
