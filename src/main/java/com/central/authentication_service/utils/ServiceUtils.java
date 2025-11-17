@@ -8,36 +8,68 @@ import org.springframework.beans.BeanUtils;
 import java.util.Objects;
 import java.util.Optional;
 
-public class ServiceUtils {
+/**
+ * Utility class providing helper methods for service layer operations.
+ * Contains methods for converting between domain models and API response objects.
+ */
+public final class ServiceUtils {
 
+    // Private constructor to prevent instantiation
+    private ServiceUtils() {
+        throw new UnsupportedOperationException("This is a utility class and cannot be instantiated");
+    }
+
+    /**
+     * Converts a User domain object to a UserResponse DTO.
+     *
+     * @param user The User entity to convert
+     * @return UserResponse containing the user's data
+     * @throws IllegalArgumentException if the user parameter is null
+     */
     public static UserResponse constructUserResponse(User user) {
-
-        if(Objects.isNull(user)){
-            throw new IllegalArgumentException("User is null");
+        if (Objects.isNull(user)) {
+            throw new IllegalArgumentException("User cannot be null");
         }
+        
         UserResponse userResponse = new UserResponse();
-        BeanUtils.copyProperties(user,userResponse);
+        // Copy matching properties from User to UserResponse
+        BeanUtils.copyProperties(user, userResponse);
+        // Manually set the role as it requires conversion from enum to string
         userResponse.setRole(UserResponse.RoleEnum.valueOf(user.getRole().toString()));
         return userResponse;
     }
 
+    /**
+     * Converts an Optional<User> to a UserResponse DTO.
+     *
+     * @param user Optional containing the User entity to convert
+     * @return UserResponse containing the user's data
+     * @throws IllegalArgumentException if the Optional parameter is null or empty
+     */
     public static UserResponse constructUserResponse(Optional<User> user) {
-
-        if(Objects.isNull(user)){
-            throw new IllegalArgumentException("User is null");
+        if (user == null || user.isEmpty()) {
+            throw new IllegalArgumentException("User cannot be null or empty");
         }
-        UserResponse userResponse = new UserResponse();
-        BeanUtils.copyProperties(user.get(),userResponse);
-        userResponse.setRole(UserResponse.RoleEnum.valueOf(user.get().getRole().toString()));
-        return userResponse;
+        
+        return constructUserResponse(user.get());
     }
 
+    /**
+     * Creates a LoginResponse DTO with the provided JWT token.
+     * Sets a default expiration time of 10 hours.
+     *
+     * @param token The JWT token to include in the response
+     * @return LoginResponse containing the token and expiration information
+     * @throws IllegalArgumentException if the token is null or empty
+     */
     public static LoginResponse constructLoginResponse(String token) {
+        if (token == null || token.trim().isEmpty()) {
+            throw new IllegalArgumentException("Token cannot be null or empty");
+        }
 
         LoginResponse loginResponse = new LoginResponse();
         loginResponse.setAccessToken(token);
         loginResponse.setExpiresIn("10 Hrs");
         return loginResponse;
     }
-
 }

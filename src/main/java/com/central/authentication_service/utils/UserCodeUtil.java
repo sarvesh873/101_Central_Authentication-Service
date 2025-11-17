@@ -10,20 +10,35 @@ import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * Utility class for generating secure, unique user codes.
+ * Uses HMAC-based generation with a secret key and random salt to ensure
+ * both uniqueness and unpredictability of generated codes.
+ */
 @Slf4j
 @Component
 public class UserCodeUtil {
 
-    @Value("${central.usercode.secret}")
     private static String SECRET;
+    private static SecureRandom RANDOM = new SecureRandom();
 
-    private static final SecureRandom RANDOM = new SecureRandom();
+    /**
+     * Constructor for UserCodeUtil.
+     *
+     * @param secret The secret key for HMAC generation, injected from application properties
+     */
+    public UserCodeUtil(@Value("${central.usercode.secret}") String secret) {
+        SECRET = secret;
+    }
+    /**
+     * Character set used for generating alphanumeric user codes (A-Z, 0-9).
+     */
     private static final char[] ALPHANUM_CHARS = ALPHANUM.toCharArray();
 
     public static String generateUserCode(String username) {
 
         try {
-            log.info("Generating user code for username: {}", username);
+            log.info("Generating user code for username: {}", SECRET);
             // 1. Generate random salt (secure)
             byte[] salt = new byte[16]; // 128-bit crypto salt
             RANDOM.nextBytes(salt);
