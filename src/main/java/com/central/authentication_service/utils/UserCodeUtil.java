@@ -38,7 +38,7 @@ public class UserCodeUtil {
     public static String generateUserCode(String username) {
 
         try {
-            log.info("Generating user code for username: {}", SECRET);
+            log.info("Generating user code for username: {}", username);
             // 1. Generate random salt (secure)
             byte[] salt = new byte[16]; // 128-bit crypto salt
             RANDOM.nextBytes(salt);

@@ -59,7 +59,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ErrorResponse'
               examples:
                 missingHeader:
                   summary: Missing header example
@@ -71,7 +71,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ErrorResponse'
               examples:
                 conflict:
                   value:
@@ -82,7 +82,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ErrorResponse'
 
     get:
       tags:
@@ -108,13 +108,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ErrorResponse'
         '500':
           description: Internal Server Error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ErrorResponse'
 
 
   /users/search:
@@ -152,13 +152,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ErrorResponse'
         '500':
           description: Internal Server Error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ErrorResponse'
 
   /auth/login:
     post:
@@ -185,13 +185,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: "#/components/schemas/ErrorResponse"
         "500":
           description: Internal Server Error
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: "#/components/schemas/ErrorResponse"
 
   /auth/validate:
     post:
@@ -259,14 +259,24 @@ components:
           type: string
           enum: [USER, SUPERUSER]
 
-    Error:
+    ErrorResponse:
       type: object
+      x-lombok-annotations:
+        - "@lombok.Builder"
       properties:
-        code:
-          type: integer
-          format: int32
-        message:
+        errorCode:
+          type: number
+          format: double
+          description: Numeric error code
+        description:
           type: string
+          description: Human-readable description providing more details about the error
+        errorType:
+          type: string
+          description: Categorization of the error (e.g., VALIDATION_ERROR, AUTHENTICATION_FAILED)
+        errorMessage:
+          type: string
+          description: A brief message summarizing the error condition
 
     LoginRequest:
       type: object

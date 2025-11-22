@@ -31,11 +31,13 @@ public final class ServiceUtils {
             throw new IllegalArgumentException("User cannot be null");
         }
         
-        UserResponse userResponse = new UserResponse();
-        // Copy matching properties from User to UserResponse
-        BeanUtils.copyProperties(user, userResponse);
-        // Manually set the role as it requires conversion from enum to string
-        userResponse.setRole(UserResponse.RoleEnum.valueOf(user.getRole().toString()));
+        UserResponse userResponse = UserResponse.builder()
+                // Copy matching properties from User to UserResponse
+                .username(user.getUsername())
+                .email(user.getEmail())
+                // Convert role to RoleEnum
+                .role(UserResponse.RoleEnum.valueOf(user.getRole().toString()))
+                .build();
         return userResponse;
     }
 
@@ -67,9 +69,10 @@ public final class ServiceUtils {
             throw new IllegalArgumentException("Token cannot be null or empty");
         }
 
-        LoginResponse loginResponse = new LoginResponse();
-        loginResponse.setAccessToken(token);
-        loginResponse.setExpiresIn("10 Hrs");
+        LoginResponse loginResponse = LoginResponse.builder()
+                .accessToken(token)
+                .expiresIn("10 Hrs")
+                .build();
         return loginResponse;
     }
 }
