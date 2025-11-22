@@ -18,6 +18,7 @@ public class SecurityConfig {
                         .requestMatchers("/user/**").permitAll()
                         .requestMatchers("/users/**").permitAll()
                         .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers("/actuator/**").permitAll()
                         .anyRequest().authenticated()
                 );
 
