@@ -3,7 +3,6 @@ package com.central.authentication_service.utils;
 import com.central.authentication_service.model.User;
 import org.openapitools.model.LoginResponse;
 import org.openapitools.model.UserResponse;
-import org.springframework.beans.BeanUtils;
 
 import java.util.Objects;
 import java.util.Optional;

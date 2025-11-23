@@ -12,7 +12,7 @@ info:
     - JWT tokens expose only `userCode` (UUID) as `sub` claim
 
 servers:
-  - url: http://localhost:8086/api/authenticate
+  - url: http://localhost:8086/authentication_service/api
     description: Local Development Server
 
 tags:
