@@ -68,5 +68,5 @@ public interface UserRepository extends JpaRepository<User, String> {
      * @return An Optional containing the user's role if found, empty otherwise
      */
     @Query("SELECT u.role FROM User u WHERE u.userCode = :userCode")
-    Optional<Role> getUserRoleByUserCode(@Param("userCode") UUID userCode);
+    Optional<Role> getUserRoleByUserCode(@Param("userCode") String userCode);
 }

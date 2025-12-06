@@ -53,9 +53,17 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public ResponseEntity<LoginResponse> loginUser(LoginRequest loginRequest) {
         // Validate input parameters
-        if (loginRequest == null || loginRequest.getEmail() == null || loginRequest.getPassword() == null) {
-            log.warn("Login attempt with missing credentials");
-            throw new IllegalArgumentException("Email and password are required");
+        if (loginRequest == null) {
+            log.warn("Login attempt with null request");
+            throw new InvalidInputException("Login request cannot be null. Please provide valid login credentials.");
+        }
+        if (loginRequest.getEmail() == null || loginRequest.getEmail().trim().isEmpty()) {
+            log.warn("Login attempt with empty email");
+            throw new InvalidInputException("Email address is required. Please enter a valid email address.");
+        }
+        if (loginRequest.getPassword() == null || loginRequest.getPassword().trim().isEmpty()) {
+            log.warn("Login attempt with empty password for email: {}", loginRequest.getEmail());
+            throw new InvalidInputException("Password is required. Please enter your password.");
         }
 
         try {
@@ -70,8 +78,8 @@ public class AuthServiceImpl implements AuthService {
 
             // Verify password
             if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
-                log.info("Login failed - Invalid password for email: {}", loginRequest.getEmail());
-                throw new InvalidJWTTokenException("Invalid email or password");
+                log.warn("Login failed - Invalid password for email: {}", loginRequest.getEmail());
+                throw new InvalidInputException("Authentication failed. The email address or password you entered is incorrect. Please check your credentials and try again.");
             }
 
             // Generate and return JWT token
@@ -80,12 +88,12 @@ public class AuthServiceImpl implements AuthService {
             log.info("User authenticated successfully: {}", user.getUserCode());
             return ResponseEntity.ok(response);
 
-        } catch (UserDoesNotExistException | InvalidJWTTokenException e) {
+        } catch (UserDoesNotExistException | InvalidInputException e) {
             // Re-throw specific exceptions
             throw e;
         } catch (Exception e) {
             log.error("Unexpected error during authentication for email: {}", loginRequest.getEmail(), e);
-            throw new InvalidJWTTokenException("Authentication failed: " + e.getMessage());
+            throw new InvalidInputException("Authentication service is currently unavailable. Please try again later. If the problem persists, please contact support.");
         }
     }
 

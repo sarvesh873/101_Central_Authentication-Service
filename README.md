@@ -67,8 +67,8 @@ docker-compose up -d
 
 Once the application is running, access the following:
 
-- **Swagger UI**: http://localhost:8086/swagger-ui.html
-- **OpenAPI 3.0 Docs**: http://localhost:8086/v3/api-docs
+- **Swagger UI**: http://localhost:8084/swagger-ui.html
+- **OpenAPI 3.0 Docs**: http://localhost:8084/v3/api-docs
 
 ## 🧪 Testing
 

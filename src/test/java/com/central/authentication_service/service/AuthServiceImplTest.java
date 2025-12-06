@@ -1,6 +1,7 @@
 package com.central.authentication_service.service;
 
 import com.central.authentication_service.exception.InvalidJWTTokenException;
+import com.central.authentication_service.exception.InvalidInputException;
 import com.central.authentication_service.exception.UserDoesNotExistException;
 import com.central.authentication_service.model.Role;
 import com.central.authentication_service.model.User;
@@ -98,16 +99,16 @@ class AuthServiceImplTest {
     }
 
     @Test
-    void loginUser_WhenUnexpectedErrorOccurs_ShouldThrowInvalidJWTTokenException() {
+    void loginUser_WhenUnexpectedErrorOccurs_ShouldThrowInvalidInputException() {
         // Arrange
         when(userRepository.findByEmail(testEmail)).thenThrow(new RuntimeException("Database error"));
 
         // Act & Assert
-        InvalidJWTTokenException exception = assertThrows(InvalidJWTTokenException.class, () -> {
+        InvalidInputException exception = assertThrows(InvalidInputException.class, () -> {
             authService.loginUser(loginRequest);
         });
         
-        assertTrue(exception.getMessage().contains("Authentication failed"));
+        assertTrue(exception.getMessage().contains("Authentication service is currently unavailable"));
         verify(userRepository, times(1)).findByEmail(testEmail);
         verifyNoInteractions(passwordEncoder);
         verifyNoInteractions(jwtUtil);
@@ -154,54 +155,62 @@ class AuthServiceImplTest {
     }
 
     @Test
-    void loginUser_WithInvalidPassword_ShouldThrowInvalidJWTTokenException() {
+    void loginUser_WithInvalidPassword_ShouldThrowInvalidInputException() {
         // Arrange
         when(userRepository.findByEmail(testEmail)).thenReturn(Optional.of(testUser));
         when(passwordEncoder.matches(testPassword, encodedPassword)).thenReturn(false);
 
         // Act & Assert
-        assertThrows(InvalidJWTTokenException.class, () -> {
+        InvalidInputException exception = assertThrows(InvalidInputException.class, () -> {
             authService.loginUser(loginRequest);
         });
+        
+        assertTrue(exception.getMessage().contains("Authentication failed"));
         verify(userRepository, times(1)).findByEmail(testEmail);
         verify(passwordEncoder, times(1)).matches(testPassword, encodedPassword);
         verifyNoInteractions(jwtUtil);
     }
 
     @Test
-    void loginUser_WithNullRequest_ShouldThrowIllegalArgumentException() {
+    void loginUser_WithNullRequest_ShouldThrowInvalidInputException() {
         // Act & Assert
-        assertThrows(IllegalArgumentException.class, () -> {
+        InvalidInputException exception = assertThrows(InvalidInputException.class, () -> {
             authService.loginUser(null);
         });
+        
+        assertEquals("Login request cannot be null. Please provide valid login credentials.", exception.getMessage());
         verifyNoInteractions(userRepository);
         verifyNoInteractions(passwordEncoder);
         verifyNoInteractions(jwtUtil);
     }
 
     @Test
-    void loginUser_WithNullEmail_ShouldThrowIllegalArgumentException() {
+    void loginUser_WithNullEmail_ShouldThrowInvalidInputException() {
         // Arrange
         loginRequest.setEmail(null);
 
         // Act & Assert
-        assertThrows(IllegalArgumentException.class, () -> {
+        InvalidInputException exception = assertThrows(InvalidInputException.class, () -> {
             authService.loginUser(loginRequest);
         });
+        
+        assertEquals("Email address is required. Please enter a valid email address.", exception.getMessage());
         verifyNoInteractions(userRepository);
         verifyNoInteractions(passwordEncoder);
         verifyNoInteractions(jwtUtil);
     }
 
     @Test
-    void loginUser_WithNullPassword_ShouldThrowIllegalArgumentException() {
+    void loginUser_WithNullPassword_ShouldThrowInvalidInputException() {
         // Arrange
         loginRequest.setPassword(null);
 
         // Act & Assert
-        assertThrows(IllegalArgumentException.class, () -> {
+        InvalidInputException exception = assertThrows(InvalidInputException.class, () -> {
             authService.loginUser(loginRequest);
         });
+        
+        assertEquals("Password is required. Please enter your password.", exception.getMessage());
         verifyNoInteractions(userRepository);
         verifyNoInteractions(passwordEncoder);
         verifyNoInteractions(jwtUtil);

@@ -34,6 +34,7 @@ public final class ServiceUtils {
                 // Copy matching properties from User to UserResponse
                 .username(user.getUsername())
                 .email(user.getEmail())
+                .phoneNumber(user.getPhoneNumber())
                 // Convert role to RoleEnum
                 .role(UserResponse.RoleEnum.valueOf(user.getRole().toString()))
                 .build();

@@ -57,26 +57,35 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public ResponseEntity<UserResponse> createUser(CentralRequest<CreateUserRequest> request) {
+        // Validate request object
         if (request == null || request.getT() == null) {
-            throw new IllegalArgumentException("User creation request cannot be null");
+            log.warn("User creation request is null");
+            throw new InvalidInputException("User creation request cannot be empty");
         }
 
-        String email = request.getT().getEmail();
-        if (repository.existsByEmail(email)) {
-            log.warn("Attempted to create user with existing email: {}", email);
+        CreateUserRequest userRequest = request.getT();
+        // Check for existing user
+        if (repository.existsByEmail(userRequest.getEmail())) {
+            log.warn("User creation failed - Email already exists: {}", userRequest.getEmail());
             throw new InvalidInputException("A user with this email already exists");
         }
 
-        String username = request.getT().getUsername();
-        log.info("Creating new user with username: {}", username);
-        
+        // Validate username format (alphanumeric with underscores, 3-20 chars)
+        if (!userRequest.getUsername().matches("^[a-zA-Z0-9_]{3,20}$")) {
+            log.warn("User creation failed - Invalid username format: {}", userRequest.getUsername());
+            throw new InvalidInputException("Username must be 3-20 characters long and can only contain letters, numbers, and underscores");
+        }
+
         try {
+            log.info("Creating new user with username: {}", userRequest.getUsername());
+            
             User user = User.builder()
-                    .userCode(generateUserCode(username))
-                    .username(username)
-                    .email(email)
-                    .role(Role.valueOf(request.getT().getRole()))
-                    .password(passwordEncoder.encode(request.getT().getPassword()))
+                    .userCode(generateUserCode(userRequest.getUsername()))
+                    .username(userRequest.getUsername())
+                    .email(userRequest.getEmail())
+                    .phoneNumber(userRequest.getPhoneNumber())
+                    .role(userRequest.getRole() != null ? Role.valueOf(userRequest.getRole().getValue()) : Role.USER)
+                    .password(passwordEncoder.encode(userRequest.getPassword()))
                     .build();
 
             User savedUser = repository.save(user);
@@ -87,7 +96,7 @@ public class UserServiceImpl implements UserService {
                     
         } catch (Exception e) {
             log.error("Error creating user: {}", e.getMessage(), e);
-            throw new RuntimeException("Failed to create user: " + e.getMessage(), e);
+            throw new RuntimeException("Failed to create user. Please try again later.", e);
         }
     }
 

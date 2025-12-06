@@ -46,6 +46,14 @@ public class User {
     private String email;
 
     /**
+     * The phone number of the user.
+     * Used for authentication and communication.
+     * Stored in international format (e.g., +1234567890).
+     */
+    @Column(name = "phone_number", nullable = false)
+    private String phoneNumber;
+
+    /**
      * The hashed password of the user.
      * Never stored in plain text for security reasons.
      */

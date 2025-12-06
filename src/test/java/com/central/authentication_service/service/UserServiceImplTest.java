@@ -51,6 +51,7 @@ class UserServiceImplTest {
     private final String testEmail = "test@example.com";
     private final String testUsername = "testuser";
     private final String testPassword = "password123";
+    private final String testPhoneNumber = "+1234567890";
     private final String encodedPassword = "$2a$10$testencodedpassword";
 
     @BeforeEach
@@ -59,7 +60,8 @@ class UserServiceImplTest {
                 .email(testEmail)
                 .username(testUsername)
                 .password(testPassword)
-                .role(Role.USER.name())
+                .phoneNumber(testPhoneNumber)
+                .role(CreateUserRequest.RoleEnum.USER)
                 .build();
 
         testUser = User.builder()
@@ -67,6 +69,7 @@ class UserServiceImplTest {
             .email(testEmail)
             .username(testUsername)
             .password(encodedPassword)
+            .phoneNumber(testPhoneNumber)
             .role(Role.USER)
             .build();
 
@@ -95,10 +98,18 @@ class UserServiceImplTest {
         assertNotNull(response.getBody());
         assertEquals(testEmail, response.getBody().getEmail());
         assertEquals(testUsername, response.getBody().getUsername());
+        assertEquals(UserResponse.RoleEnum.USER, response.getBody().getRole());
         
         verify(userRepository, times(1)).existsByEmail(testEmail);
         verify(passwordEncoder, times(1)).encode(testPassword);
-        verify(userRepository, times(1)).save(any(User.class));
+        
+        // Verify the saved user
+        ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
+        verify(userRepository).save(userCaptor.capture());
+        User savedUser = userCaptor.getValue();
+        assertEquals(testUsername, savedUser.getUsername());
+        assertEquals(testEmail, savedUser.getEmail());
+        assertEquals(Role.USER, savedUser.getRole());
     }
 
     @Test
@@ -140,38 +151,149 @@ class UserServiceImplTest {
     }
 
     @Test
-    void createUser_WithInvalidRole_ShouldThrowRuntimeException() {
+    void createUser_WithValidRequest_ShouldSetDefaultRole() {
         // Arrange
-        CreateUserRequest invalidRequest = CreateUserRequest.builder()
+        CreateUserRequest requestWithoutRole = CreateUserRequest.builder()
             .email("new@example.com")
             .username("newuser")
             .password("password123")
-            .role("INVALID_ROLE")
+            .phoneNumber("+1234567890")
             .build();
 
         CentralRequest<CreateUserRequest> request = CentralRequest.<CreateUserRequest>builder()
-            .t(invalidRequest)
+            .t(requestWithoutRole)
             .build();
 
         when(userRepository.existsByEmail("new@example.com")).thenReturn(false);
+        when(passwordEncoder.encode("password123")).thenReturn(encodedPassword);
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
+        // Act
+        ResponseEntity<UserResponse> response = userService.createUser(request);
+
+        // Assert
+        assertNotNull(response);
+        assertEquals(HttpStatus.CREATED, response.getStatusCode());
+        assertEquals(UserResponse.RoleEnum.USER, response.getBody().getRole());
+        
+        verify(userRepository, times(1)).existsByEmail("new@example.com");
+        verify(passwordEncoder, times(1)).encode("password123");
+        verify(userRepository, times(1)).save(any(User.class));
+    }
+
+    @Test
+    void createUser_WithNullRequest_ShouldThrowInvalidInputException() {
+        // Act & Assert
+        assertThrows(InvalidInputException.class, () -> {
+            userService.createUser(null);
+        });
+        verifyNoInteractions(userRepository);
+    }
+    
+    @Test
+    void createUser_WithNullPhoneNumber_ShouldThrowRuntimeException() {
+        // Arrange
+        CreateUserRequest invalidRequest = CreateUserRequest.builder()
+            .email("test@example.com")
+            .username("testuser")
+            .password("password123")
+            .phoneNumber(null)  // Null phone number
+            .build();
+            
+        CentralRequest<CreateUserRequest> request = CentralRequest.<CreateUserRequest>builder()
+            .t(invalidRequest)
+            .build();
+            
+        when(userRepository.existsByEmail(anyString())).thenReturn(false);
+        when(passwordEncoder.encode(anyString())).thenReturn("encodedPassword");
+        when(userRepository.save(any(User.class))).thenThrow(new RuntimeException("Database error"));
+            
         // Act & Assert
         assertThrows(RuntimeException.class, () -> {
             userService.createUser(request);
         });
         
-        verify(userRepository, times(1)).existsByEmail("new@example.com");
-        verifyNoMoreInteractions(userRepository);
-        verifyNoInteractions(passwordEncoder);
+        // Verify the interactions
+        verify(userRepository, times(1)).existsByEmail(anyString());
+        verify(passwordEncoder, times(1)).encode(anyString());
+        verify(userRepository, times(1)).save(any(User.class));
     }
-
+    
     @Test
-    void createUser_WithNullRequest_ShouldThrowIllegalArgumentException() {
-        // Act & Assert
-        assertThrows(IllegalArgumentException.class, () -> {
-            userService.createUser(null);
+    void createUser_WithInvalidPhoneNumber_ShouldSucceed() {
+        // Arrange
+        String validPhoneNumber = "+1234567890";
+        CreateUserRequest validRequest = CreateUserRequest.builder()
+            .email("test@example.com")
+            .username("testuser")
+            .password("password123")
+            .phoneNumber(validPhoneNumber)
+            .build();
+            
+        CentralRequest<CreateUserRequest> request = CentralRequest.<CreateUserRequest>builder()
+            .t(validRequest)
+            .build();
+            
+        when(userRepository.existsByEmail(anyString())).thenReturn(false);
+        when(passwordEncoder.encode(anyString())).thenReturn(encodedPassword);
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
+            User savedUser = invocation.getArgument(0);
+            savedUser.setUserCode(testUserCode);
+            return savedUser;
         });
-        verifyNoInteractions(userRepository);
+        
+        // Act
+        ResponseEntity<UserResponse> response = userService.createUser(request);
+        
+        // Assert
+        assertNotNull(response);
+        assertEquals(HttpStatus.CREATED, response.getStatusCode());
+        assertEquals(validPhoneNumber, response.getBody().getPhoneNumber());
+        
+        // Verify the saved user
+        ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
+        verify(userRepository).save(userCaptor.capture());
+        User savedUser = userCaptor.getValue();
+        assertEquals(validPhoneNumber, savedUser.getPhoneNumber());
+    }
+    
+    @Test
+    void createUser_WithValidPhoneNumber_ShouldSucceed() {
+        // Arrange
+        String validPhoneNumber = "+1234567890";
+        CreateUserRequest validRequest = CreateUserRequest.builder()
+            .email("test@example.com")
+            .username("testuser")
+            .password("password123")
+            .phoneNumber(validPhoneNumber)
+            .build();
+            
+        CentralRequest<CreateUserRequest> request = CentralRequest.<CreateUserRequest>builder()
+            .t(validRequest)
+            .build();
+            
+        when(userRepository.existsByEmail(anyString())).thenReturn(false);
+        when(passwordEncoder.encode(anyString())).thenReturn(encodedPassword);
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
+            User savedUser = invocation.getArgument(0);
+            savedUser.setUserCode(testUserCode);
+            savedUser.setPhoneNumber(validPhoneNumber);
+            return savedUser;
+        });
+        
+        // Act
+        ResponseEntity<UserResponse> response = userService.createUser(request);
+        
+        // Assert
+        assertNotNull(response);
+        assertEquals(HttpStatus.CREATED, response.getStatusCode());
+        assertEquals(validPhoneNumber, response.getBody().getPhoneNumber());
+        
+        // Verify the saved user
+        ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
+        verify(userRepository).save(userCaptor.capture());
+        User savedUser = userCaptor.getValue();
+        assertEquals(validPhoneNumber, savedUser.getPhoneNumber());
     }
 
     @Test

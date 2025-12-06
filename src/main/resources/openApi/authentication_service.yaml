@@ -12,7 +12,7 @@ info:
     - JWT tokens expose only `userCode` (UUID) as `sub` claim
 
 servers:
-  - url: http://localhost:8086/authentication_service/api
+  - url: http://localhost:8083/authentication_service/api
     description: Local Development Server
 
 tags:
@@ -224,23 +224,45 @@ components:
         - username
         - email
         - password
+        - phoneNumber
       properties:
         username:
           type: string
-          description: Username for the new user
+          minLength: 3
+          maxLength: 50
+          pattern: '^[a-zA-Z0-9_]+$'
+          description: Username for the new user (3-50 alphanumeric characters and underscores only)
         email:
           type: string
           format: email
-          minLength: 4
-          description: Email address of the new user
+          minLength: 5
+          maxLength: 100
+          pattern: '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+          description: Email address of the new user (must be a valid email format)
+          example: user@example.com
+        phoneNumber:
+          type: string
+          pattern: '^\+[1-9]\d{1,14}$'
+          minLength: 8
+          maxLength: 20
+          description: Phone number in E.164 format (e.g., +1234567890)
+          example: "+1234567890"
         password:
           type: string
           minLength: 8
-          description: Account password
+          maxLength: 100
+          pattern: '^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$'
+          description: |
+            Password must be 8-100 characters long and include:
+            - At least one uppercase letter
+            - At least one lowercase letter
+            - At least one digit
+            - At least one special character (@$!%*?&)
         role:
           type: string
-          description: Role for the user
+          enum: [USER, SUPERUSER]
           default: USER
+          description: Role for the user. Default is USER
 
     UserResponse:
       type: object
@@ -248,6 +270,7 @@ components:
       required:
         - username
         - email
+        - phoneNumber
         - role
       properties:
         username:
@@ -255,6 +278,10 @@ components:
         email:
           type: string
           format: email
+        phoneNumber:
+          type: string
+          description: Phone number in E.164 format (e.g., +1234567890)
+          example: "+1234567890"
         role:
           type: string
           enum: [USER, SUPERUSER]
