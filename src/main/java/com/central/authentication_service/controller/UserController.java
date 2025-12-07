@@ -2,6 +2,8 @@ package com.central.authentication_service.controller;
 
 import com.central.authentication_service.model.CentralRequest;
 import com.central.authentication_service.service.UserService;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.openapitools.model.*;
 import org.springframework.http.ResponseEntity;
@@ -39,7 +41,7 @@ public class UserController implements UserApi {
      * @return ResponseEntity containing the created user's details and HTTP status
      */
     @Override
-    public ResponseEntity<UserResponse> createUser(CreateUserRequest createUserRequest) {
+    public ResponseEntity<UserResponse> createUser( @Valid @RequestBody CreateUserRequest createUserRequest) {
         log.info("Processing create user request for username: {}, email: {}",
                 createUserRequest.getUsername(), createUserRequest.getEmail());
 

@@ -2,6 +2,7 @@ package com.central.authentication_service.service;
 
 import com.central.authentication_service.exception.InvalidInputException;
 import com.central.authentication_service.exception.UserDoesNotExistException;
+import com.central.authentication_service.grpc.WalletServiceGrpcClient;
 import com.central.authentication_service.model.CentralRequest;
 import com.central.authentication_service.model.Role;
 import com.central.authentication_service.model.User;
@@ -34,6 +35,7 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository repository;
     private final PasswordEncoder passwordEncoder;
+    private final WalletServiceGrpcClient walletServiceGrpcClient;
 
     /**
      * Constructs a new UserServiceImpl with the required dependencies.
@@ -42,9 +44,10 @@ public class UserServiceImpl implements UserService {
      * @param passwordEncoder The password encoder for hashing passwords
      */
     @Autowired
-    public UserServiceImpl(UserRepository repository, PasswordEncoder passwordEncoder) {
+    public UserServiceImpl(UserRepository repository, PasswordEncoder passwordEncoder, WalletServiceGrpcClient walletServiceGrpcClient) {
         this.repository = repository;
         this.passwordEncoder = passwordEncoder;
+        this.walletServiceGrpcClient = walletServiceGrpcClient;
     }
 
     /**
@@ -90,7 +93,15 @@ public class UserServiceImpl implements UserService {
 
             User savedUser = repository.save(user);
             log.info("User created successfully with userCode: {}", savedUser.getUserCode());
-            
+
+            try {
+                walletServiceGrpcClient.createWallet(savedUser.getUserCode(), "INR");
+            } catch (Exception e) {
+                repository.delete(savedUser);
+                log.error("Error creating wallet for user: {}", savedUser.getUserCode(), e);
+                throw new RuntimeException("Failed to create wallet for user. Please try again later.", e);
+            }
+
             return constructUserResponse(savedUser);
                     
         } catch (Exception e) {

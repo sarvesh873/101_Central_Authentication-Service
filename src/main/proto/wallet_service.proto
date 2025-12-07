@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+package com.central.wallet;
+
+import "google/protobuf/timestamp.proto";
+
+option java_multiple_files = true;
+option java_package = "com.central.wallet";
+option java_outer_classname = "WalletServiceProto";
+
+// --- Service Definition ---
+
+service WalletService {
+  // Creates a new wallet for a user, initializing the balance to zero.
+  rpc CreateWallet (WalletCreateRequestGRPC) returns (WalletResponseGRPC);
+}
+
+// --- Request/Response Messages ---
+
+message WalletCreateRequestGRPC {
+  // The unique ID of the user (User Service primary key).
+  string user_code = 1;
+  // The currency code (e.g., USD, EUR, INR).
+  string currency = 2;
+}
+
+message WalletResponseGRPC {
+  // Unique identifier of the wallet.
+  int64 wallet_id = 1;
+  // The unique user identifier.
+  string user_code = 2;
+  // Current ledger balance in the wallet (including holds).
+  double balance = 3;
+  // The status of the wallet.
+  string status = 4;
+  // The currency code (e.g., USD, EUR).
+  string currency = 5;
+  // Current available balance in the wallet (excluding active holds).
+  double available_balance = 6;
+  // Timestamp when the wallet was created.
+  google.protobuf.Timestamp created_at = 7;
+
+  // Snapshot data replicated from the User Service.
+  string username = 8;
+  string email = 9;
+  string phone_number = 10;
+}
