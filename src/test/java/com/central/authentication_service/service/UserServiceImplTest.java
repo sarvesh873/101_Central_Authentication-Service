@@ -2,6 +2,7 @@ package com.central.authentication_service.service;
 
 import com.central.authentication_service.exception.InvalidInputException;
 import com.central.authentication_service.exception.UserDoesNotExistException;
+import com.central.authentication_service.grpc.WalletServiceGrpcClient;
 import com.central.authentication_service.model.CentralRequest;
 import com.central.authentication_service.model.Role;
 import com.central.authentication_service.model.User;
@@ -44,6 +45,9 @@ class UserServiceImplTest {
 
     @InjectMocks
     private UserServiceImpl userService;
+
+    @Mock
+    private WalletServiceGrpcClient walletServiceGrpcClient;
 
     private CreateUserRequest createUserRequest;
     private User testUser;
@@ -92,6 +96,10 @@ class UserServiceImplTest {
             savedUser.setUserCode(testUserCode);
             return savedUser;
         });
+
+        // Mock the wallet service call
+        doNothing().when(walletServiceGrpcClient).createWallet(anyString(), anyString());
+
 
         // Act
         UserResponse response = userService.createUser(request);

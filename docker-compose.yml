@@ -26,6 +26,9 @@ services:
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       SPRING_SQL_INIT_MODE: always
       AUTHENTICATION_SERVICE_GRPC_PORT: 9003
+      wallet.service.host: central-wallet-service # <--- CHANGE THIS
+      wallet.service.port: 9095          # <--- CHANGE THIS
+      KAFKA_TOPIC_USER_EVENTS: user-events
       # Note: The database hostname is 'db' because that is the service name below
 
     networks:

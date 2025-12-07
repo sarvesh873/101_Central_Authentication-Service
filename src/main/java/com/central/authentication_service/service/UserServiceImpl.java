@@ -3,6 +3,7 @@ package com.central.authentication_service.service;
 import com.central.authentication_service.exception.InvalidInputException;
 import com.central.authentication_service.exception.UserDoesNotExistException;
 import com.central.authentication_service.grpc.WalletServiceGrpcClient;
+import com.central.authentication_service.kafka.KafkaUserEventProducer;
 import com.central.authentication_service.model.CentralRequest;
 import com.central.authentication_service.model.Role;
 import com.central.authentication_service.model.User;
@@ -36,6 +37,7 @@ public class UserServiceImpl implements UserService {
     private final UserRepository repository;
     private final PasswordEncoder passwordEncoder;
     private final WalletServiceGrpcClient walletServiceGrpcClient;
+    private final KafkaUserEventProducer kafkaUserEventProducer;
 
     /**
      * Constructs a new UserServiceImpl with the required dependencies.
@@ -44,10 +46,11 @@ public class UserServiceImpl implements UserService {
      * @param passwordEncoder The password encoder for hashing passwords
      */
     @Autowired
-    public UserServiceImpl(UserRepository repository, PasswordEncoder passwordEncoder, WalletServiceGrpcClient walletServiceGrpcClient) {
+    public UserServiceImpl(UserRepository repository, PasswordEncoder passwordEncoder, WalletServiceGrpcClient walletServiceGrpcClient, KafkaUserEventProducer kafkaUserEventProducer) {
         this.repository = repository;
         this.passwordEncoder = passwordEncoder;
         this.walletServiceGrpcClient = walletServiceGrpcClient;
+        this.kafkaUserEventProducer = kafkaUserEventProducer;
     }
 
     /**
@@ -100,6 +103,13 @@ public class UserServiceImpl implements UserService {
                 repository.delete(savedUser);
                 log.error("Error creating wallet for user: {}", savedUser.getUserCode(), e);
                 throw new RuntimeException("Failed to create wallet for user. Please try again later.", e);
+            }
+
+            try {
+                kafkaUserEventProducer.sendUserEvent(savedUser);
+            } catch (Exception e) {
+                log.error("Failed to send user event to Kafka for user {}: {}",
+                        savedUser.getUserCode(), e.getMessage(), e);
             }
 
             return constructUserResponse(savedUser);
