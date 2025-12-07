@@ -20,7 +20,7 @@ public interface AuthService {
      * @throws com.central.authentication_service.exception.UserDoesNotExistException if user is not found
      * @throws com.central.authentication_service.exception.InvalidJWTTokenException if credentials are invalid
      */
-    ResponseEntity<LoginResponse> loginUser(LoginRequest loginRequest);
+    LoginResponse loginUser(LoginRequest loginRequest);
 
     /**
      * Validates a JWT token.
@@ -29,5 +29,5 @@ public interface AuthService {
      * @return ResponseEntity with HTTP 200 OK if token is valid
      * @throws com.central.authentication_service.exception.InvalidJWTTokenException if token is invalid or expired
      */
-    ResponseEntity<Void> validateToken(String token);
+    Boolean validateToken(String token);
 }

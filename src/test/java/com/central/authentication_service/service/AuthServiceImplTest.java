@@ -65,20 +65,18 @@ class AuthServiceImplTest {
     }
 
     @Test
-    void loginUser_WithValidCredentials_ShouldReturnToken() {
+    void loginUser_WithValidCredentials_ShouldReturnLoginResponse() {
         // Arrange
         when(userRepository.findByEmail(testEmail)).thenReturn(Optional.of(testUser));
         when(passwordEncoder.matches(testPassword, encodedPassword)).thenReturn(true);
         when(jwtUtil.generateToken(anyString(), anyString())).thenReturn(testToken);
 
         // Act
-        ResponseEntity<LoginResponse> response = authService.loginUser(loginRequest);
+        LoginResponse response = authService.loginUser(loginRequest);
 
         // Assert
         assertNotNull(response);
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertNotNull(response.getBody());
-        assertEquals(testToken, response.getBody().getAccessToken());
+        assertEquals(testToken, response.getAccessToken());
         verify(userRepository, times(1)).findByEmail(testEmail);
         verify(passwordEncoder, times(1)).matches(testPassword, encodedPassword);
         verify(jwtUtil, times(1)).generateToken(anyString(), anyString());
@@ -143,7 +141,7 @@ class AuthServiceImplTest {
     void validateToken_WhenJwtExceptionOccurs_ShouldThrowInvalidJWTTokenException() {
         // Arrange
         String token = "Bearer invalid.token";
-        when(jwtUtil.validateToken(anyString())).thenThrow(new JwtException("Invalid token"));
+        doThrow(new JwtException("Invalid token")).when(jwtUtil).validateToken("invalid.token");
 
         // Act & Assert
         InvalidJWTTokenException exception = assertThrows(InvalidJWTTokenException.class, () -> {
@@ -217,31 +215,27 @@ class AuthServiceImplTest {
     }
 
     @Test
-    void validateToken_WithValidToken_ShouldReturnOk() {
+    void validateToken_WithInvalidToken_ShouldThrowInvalidJWTTokenException() {
         // Arrange
-        when(jwtUtil.validateToken(testToken)).thenReturn(true);
+        String invalidToken = "Bearer invalid.token.here";
+        doThrow(new JwtException("Invalid token")).when(jwtUtil).validateToken("invalid.token.here");
 
-        // Act
-        ResponseEntity<Void> response = authService.validateToken("Bearer "+testToken);
-
-        // Assert
-        assertNotNull(response);
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        verify(jwtUtil, times(1)).validateToken(testToken);
+        // Act & Assert
+        assertThrows(InvalidJWTTokenException.class, () -> {
+            authService.validateToken(invalidToken);
+        });
+        verify(jwtUtil, times(1)).validateToken("invalid.token.here");
     }
 
     @Test
-    void validateToken_WithBearerToken_ShouldStripBearerPrefix() {
+    void validateToken_WithValidToken_ShouldNotThrow() {
         // Arrange
-        String bearerToken = "Bearer " + testToken;
-        when(jwtUtil.validateToken(testToken)).thenReturn(true);
+        String token = "valid.token.here";
+        String validToken = "Bearer " + token;
+        when(jwtUtil.validateToken(token)).thenReturn(true);
 
-        // Act
-        ResponseEntity<Void> response = authService.validateToken(bearerToken);
-
-        // Assert
-        assertNotNull(response);
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        verify(jwtUtil, times(1)).validateToken(testToken);
+        // Act & Assert (should not throw)
+        assertDoesNotThrow(() -> authService.validateToken(validToken));
+        verify(jwtUtil, times(1)).validateToken(token);
     }
 }

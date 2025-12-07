@@ -23,7 +23,7 @@ public interface UserService {
      * @throws com.central.authentication_service.exception.UserAlreadyExistsException if a user with the same email already exists
      * @throws jakarta.validation.ValidationException if the request contains invalid data
      */
-    ResponseEntity<UserResponse> createUser(CentralRequest<CreateUserRequest> request);
+    UserResponse createUser(CentralRequest<CreateUserRequest> request);
 
     /**
      * Retrieves a user by their unique user code.
@@ -32,7 +32,7 @@ public interface UserService {
      * @return ResponseEntity containing the user's details if found
      * @throws com.central.authentication_service.exception.UserDoesNotExistException if no user is found with the given user code
      */
-    ResponseEntity<UserResponse> getUserByUserCode(String userCode);
+    UserResponse getUserByUserCode(String userCode);
 
     /**
      * Searches for users based on username and/or email.
@@ -44,5 +44,5 @@ public interface UserService {
      * @throws IllegalArgumentException if both username and email are null
      * @throws com.central.authentication_service.exception.UserDoesNotExistException if no users match the search criteria
      */
-    ResponseEntity<List<UserResponse>> searchUsers(String username, String email);
+    List<UserResponse> searchUsers(String username, String email);
 }

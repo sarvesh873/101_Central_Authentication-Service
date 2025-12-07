@@ -45,7 +45,7 @@ class AuthControllerTest {
     void loginUser_ShouldReturnLoginResponse() {
         // Arrange
         when(authService.loginUser(any(LoginRequest.class)))
-            .thenReturn(ResponseEntity.ok(loginResponse));
+            .thenReturn(loginResponse);
 
         // Act
         ResponseEntity<LoginResponse> response = authController.loginUser(loginRequest);
@@ -60,8 +60,7 @@ class AuthControllerTest {
     @Test
     void validateToken_ShouldReturnOkWhenTokenIsValid() {
         // Arrange
-        when(authService.validateToken(testToken))
-            .thenReturn(ResponseEntity.ok().build());
+        when(authService.validateToken(testToken)).thenReturn(true);
 
         // Act
         ResponseEntity<Void> response = authController.validateToken(testToken);
@@ -76,8 +75,7 @@ class AuthControllerTest {
     void validateToken_ShouldHandleTokenWithBearerPrefix() {
         // Arrange
         String tokenWithBearer = "Bearer " + testToken;
-        when(authService.validateToken(tokenWithBearer))
-            .thenReturn(ResponseEntity.ok().build());
+        when(authService.validateToken(tokenWithBearer)).thenReturn(true);
 
         // Act
         ResponseEntity<Void> response = authController.validateToken(tokenWithBearer);

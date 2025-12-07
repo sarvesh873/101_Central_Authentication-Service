@@ -51,7 +51,7 @@ public class AuthServiceImpl implements AuthService {
      * @throws InvalidJWTTokenException if the credentials are invalid or authentication fails
      */
     @Override
-    public ResponseEntity<LoginResponse> loginUser(LoginRequest loginRequest) {
+    public LoginResponse loginUser(LoginRequest loginRequest) {
         // Validate input parameters
         if (loginRequest == null) {
             log.warn("Login attempt with null request");
@@ -86,7 +86,7 @@ public class AuthServiceImpl implements AuthService {
             String token = jwtUtil.generateToken(user.getUserCode(), String.valueOf(user.getRole()));
             LoginResponse response = constructLoginResponse(token);
             log.info("User authenticated successfully: {}", user.getUserCode());
-            return ResponseEntity.ok(response);
+            return response;
 
         } catch (UserDoesNotExistException | InvalidInputException e) {
             // Re-throw specific exceptions
@@ -105,7 +105,7 @@ public class AuthServiceImpl implements AuthService {
      * @throws InvalidJWTTokenException if the token is invalid, expired, or malformed
      */
     @Override
-    public ResponseEntity<Void> validateToken(String token) {
+    public Boolean validateToken(String token) {
         log.debug("Validating authentication token");
         
         if (token == null || !token.startsWith("Bearer ")) {
@@ -117,7 +117,7 @@ public class AuthServiceImpl implements AuthService {
             String jwtToken = token.substring(7); // Remove 'Bearer ' prefix
             if (jwtUtil.validateToken(jwtToken)) {
                 log.debug("Token validation successful");
-                return ResponseEntity.ok().build();
+                return true;
             }
             log.warn("Token validation failed - Invalid token");
             throw new InvalidJWTTokenException("Invalid JWT token");

@@ -39,7 +39,8 @@ public class AuthController implements AuthApi {
     @Override
     public ResponseEntity<LoginResponse> loginUser(LoginRequest loginRequest) {
         log.debug("Received login request for email: {}", loginRequest.getEmail());
-        return authService.loginUser(loginRequest);
+        LoginResponse response = authService.loginUser(loginRequest);
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -51,6 +52,7 @@ public class AuthController implements AuthApi {
     @Override
     public ResponseEntity<Void> validateToken(String token) {
         log.debug("Validating authentication token");
-        return authService.validateToken(token);
+        authService.validateToken(token);
+        return ResponseEntity.ok().build();
     }
 }

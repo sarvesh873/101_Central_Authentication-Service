@@ -47,7 +47,8 @@ public class UserController implements UserApi {
                 .t(createUserRequest)
                 .build();
 
-        return userService.createUser(request);
+        UserResponse response = userService.createUser(request);
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -59,7 +60,8 @@ public class UserController implements UserApi {
     @Override
     public ResponseEntity<UserResponse> getUserByUserCode(String userCode) {
         log.info("Fetching user with userCode: {}", userCode);
-        return userService.getUserByUserCode(userCode);
+        UserResponse response = userService.getUserByUserCode(userCode);
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -73,6 +75,7 @@ public class UserController implements UserApi {
     @Override
     public ResponseEntity<List<UserResponse>> searchUsers(String username, String email) {
         log.info("Searching users with username: {}, email: {}", username, email);
-        return userService.searchUsers(username, email);
+        List<UserResponse> response = userService.searchUsers(username, email);
+        return ResponseEntity.ok(response);
     }
 }

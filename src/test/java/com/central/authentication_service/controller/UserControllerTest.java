@@ -51,20 +51,17 @@ class UserControllerTest {
     @Test
     void createUser_ShouldReturnCreatedUser() {
         // Arrange
-        CentralRequest<CreateUserRequest> request = CentralRequest.<CreateUserRequest>builder()
-            .t(createUserRequest)
-            .build();
-
         when(userService.createUser(any(CentralRequest.class)))
-            .thenReturn(ResponseEntity.status(HttpStatus.CREATED).body(userResponse));
+            .thenReturn(userResponse);
 
         // Act
         ResponseEntity<UserResponse> response = userController.createUser(createUserRequest);
 
         // Assert
         assertNotNull(response);
-        assertEquals(HttpStatus.CREATED, response.getStatusCode());
+        assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
+        assertEquals(userResponse, response.getBody());
         verify(userService, times(1)).createUser(any(CentralRequest.class));
     }
 
@@ -72,7 +69,7 @@ class UserControllerTest {
     void getUserByUserCode_ShouldReturnUser() {
         // Arrange
         when(userService.getUserByUserCode(testUserCode))
-            .thenReturn(ResponseEntity.ok(userResponse));
+            .thenReturn(userResponse);
 
         // Act
         ResponseEntity<UserResponse> response = userController.getUserByUserCode(testUserCode);
@@ -80,6 +77,7 @@ class UserControllerTest {
         // Assert
         assertNotNull(response);
         assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(userResponse, response.getBody());
         verify(userService, times(1)).getUserByUserCode(testUserCode);
     }
 
@@ -90,7 +88,7 @@ class UserControllerTest {
         List<UserResponse> userList = Arrays.asList(userResponse);
         
         when(userService.searchUsers(eq(username), isNull()))
-            .thenReturn(ResponseEntity.ok(userList));
+            .thenReturn(userList);
 
         // Act
         ResponseEntity<List<UserResponse>> response = userController.searchUsers(username, null);
@@ -98,6 +96,7 @@ class UserControllerTest {
         // Assert
         assertNotNull(response);
         assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(userList, response.getBody());
         assertFalse(response.getBody().isEmpty());
         assertEquals(1, response.getBody().size());
         verify(userService, times(1)).searchUsers(eq(username), isNull());
@@ -110,7 +109,7 @@ class UserControllerTest {
         List<UserResponse> userList = Arrays.asList(userResponse);
         
         when(userService.searchUsers(isNull(), eq(email)))
-            .thenReturn(ResponseEntity.ok(userList));
+            .thenReturn(userList);
 
         // Act
         ResponseEntity<List<UserResponse>> response = userController.searchUsers(null, email);

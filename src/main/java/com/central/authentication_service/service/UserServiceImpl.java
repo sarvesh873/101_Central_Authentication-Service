@@ -56,7 +56,7 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     @Transactional
-    public ResponseEntity<UserResponse> createUser(CentralRequest<CreateUserRequest> request) {
+    public UserResponse createUser(CentralRequest<CreateUserRequest> request) {
         // Validate request object
         if (request == null || request.getT() == null) {
             log.warn("User creation request is null");
@@ -91,8 +91,7 @@ public class UserServiceImpl implements UserService {
             User savedUser = repository.save(user);
             log.info("User created successfully with userCode: {}", savedUser.getUserCode());
             
-            return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(constructUserResponse(savedUser));
+            return constructUserResponse(savedUser);
                     
         } catch (Exception e) {
             log.error("Error creating user: {}", e.getMessage(), e);
@@ -109,7 +108,7 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     @Transactional(readOnly = true)
-    public ResponseEntity<UserResponse> getUserByUserCode(String userCode) {
+    public UserResponse getUserByUserCode(String userCode) {
         log.debug("Fetching user with userCode: {}", userCode);
         
         try {
@@ -120,7 +119,7 @@ public class UserServiceImpl implements UserService {
                     });
                     
             log.debug("Successfully retrieved user with userCode: {}", userCode);
-            return ResponseEntity.ok(constructUserResponse(user));
+            return constructUserResponse(user);
             
         } catch (UserDoesNotExistException e) {
             throw e; // Re-throw specific exception
@@ -142,7 +141,7 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     @Transactional(readOnly = true)
-    public ResponseEntity<List<UserResponse>> searchUsers(String username, String email) {
+    public List<UserResponse> searchUsers(String username, String email) {
         log.debug("Searching users with username: {}, email: {}", username, email);
 
         if (username == null && email == null) {
@@ -189,7 +188,7 @@ public class UserServiceImpl implements UserService {
                     .map(ServiceUtils::constructUserResponse)
                     .toList();
 
-            return ResponseEntity.ok(response);
+            return response;
             
         } catch (UserDoesNotExistException e) {
             throw e; // Re-throw specific exception
