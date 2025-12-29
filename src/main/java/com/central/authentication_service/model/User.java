@@ -9,9 +9,12 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.UUID;
 
-
+/**
+ * Entity class representing a user in the authentication system.
+ * Maps to the 'central_users' table in the database.
+ * Uses Lombok annotations to reduce boilerplate code.
+ */
 @Entity
 @Table(name = "central_users")
 @Data
@@ -20,23 +23,47 @@ import java.util.UUID;
 @Builder
 public class User {
 
+    /**
+     * Unique identifier for the user.
+     * Automatically generated and used as the primary key in the database.
+     */
     @Id
     @Column(name = "user_code", updatable = false, nullable = false)
     private String userCode;
 
-
+    /**
+     * The username of the user.
+     * Must be unique within the system.
+     */
     @Column(name = "username", nullable = false)
     private String username;
 
-
+    /**
+     * The email address of the user.
+     * Used for authentication and communication.
+     */
     @Column(name = "email", nullable = false, unique = true)
     private String email;
 
+    /**
+     * The phone number of the user.
+     * Used for authentication and communication.
+     * Stored in international format (e.g., +1234567890).
+     */
+    @Column(name = "phone_number", nullable = false)
+    private String phoneNumber;
 
+    /**
+     * The hashed password of the user.
+     * Never stored in plain text for security reasons.
+     */
     @Column(name = "password", nullable = false)
     private String password;
 
-
+    /**
+     * The role assigned to the user.
+     * Determines the user's permissions and access levels.
+     */
     @Column(name = "role", nullable = false)
     private Role role;
 }
